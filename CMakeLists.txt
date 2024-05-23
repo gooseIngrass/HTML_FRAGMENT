@@ -3,4 +3,4 @@ project(HTML_Fragmentation)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(HTML_Fragmentation main.cpp)
+add_executable(HTML_Fragmentation msg_split.cpp)
