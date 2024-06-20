@@ -20,20 +20,20 @@ int split_message(FILE *input){
     string buffer, closeTag;
     vector<string> Stack;
 
-    char c;                 //Текущий символ
-    int fragmentNum = 0;    //Номер фрагмента
-    int charCount = 0;      //Счётчик символов в текущем фрагменте
+    char c;                
+    int fragmentNum = 0;    //nomer fragmenta
+    int charCount = 0;      //kol-vo simvolov v tek fragmente
 
-    while((fscanf(input, "%c", &c)) != EOF){ //Считываем по символу
+    while((fscanf(input, "%c", &c)) != EOF){ //schityvaem fail
         printf("%c", c);
 
-        if(c == '<'){       //Если нашли скобку, то формируем тег из последующих символов
+        if(c == '<'){       //formiruem teg
             while ((c != '>') + (c != ' ') > 1){
                 buffer.push_back(c);
                 fscanf(input, "%c", &c);
                 printf("%c", c);
             }
-            while (c != '>'){ // Выводим атрибуты тега, если есть
+            while (c != '>'){ // yesli u tega est atributy, propuskaem ih
                 fscanf(input, "%c", &c);
                 printf("%c", c);
             }
@@ -42,10 +42,10 @@ int split_message(FILE *input){
             closeTag = buffer;
         }
         else{
-            if(charCount == max_len){
-                if(!Stack.empty()){ //Если достигли лимита символов, проверяем остались ли незакрытые теги
-                    for(string s : Stack){
-                        if(Tags.count(s) == 0){ //Если незакрытым остался неблочный тег, ошибка(Тут пусть Данил веселится)
+            if(charCount == max_len){ 
+                if(!Stack.empty()){ 
+                    for(string s : Stack){ //Po okonchaniu fragmenta zakryvaem vse otkrytye tegi
+                        if(Tags.count(s) == 0){
                             return 404;
                         }
                         printf("%s", Tags[s].c_str());
@@ -54,22 +54,24 @@ int split_message(FILE *input){
                     printf("\n\nfragment #%d: %d chars\n\n", fragmentNum, charCount);
                     fragmentNum++;
 
-                    for(string s : Stack){ //Открываем теги заново
+                    for(string s : Stack){ // otkryvaem zanovo v nachale sled fragmenta
                         printf("%s", s.c_str());
                     }
+                    Stack.clear();
                 }
                 else{
-                    printf("\n\nfragment #%d: %d chars\n\n", fragmentNum, charCount); //Это мракобесие надо исправить
+                    printf("\n\nfragment #%d: %d chars\n\n", fragmentNum, charCount);
                     fragmentNum++;
                 }
 
             }
-            charCount++;
-            continue; //Если тега нет то считаем текущий символ и в следующую итерацию
+            charCount++; //Yesli net sformirovannyh tegov i limit ne prevyshen, nachinaem sled iteraciu
+            continue;
         }
 
-        //Тут в условии тоже костыль, надо будет придумать по другому
-        //А так: Если в стеке лежит открыващий, а в буфере закрывающий, то убираем из стека открывающий
+
+        //yesli sformirovannyi teg zakryvaushiy, ubiraem iz steka otkryvaushiy
+
         if(!buffer.empty() && !Stack.empty() && Stack.back() == buffer.erase(1, 1)){
             Stack.pop_back();
         }
@@ -83,12 +85,16 @@ int split_message(FILE *input){
 }
 
 int main() {
-    FILE *input = fopen("F:\\HTML_Fragmentation\\source.html", "r");
+    FILE *input = fopen("source.html", "r");
     if(input == NULL){
         printf("FILE DOESNT EXIST");
     }
     int error = split_message(input);
-    printf("%d\n", error);
+    switch(error){
+        case 404:
+            printf("%d\n", error);
+            break;
+    }    
     fclose(input);
     return 0;
 }
