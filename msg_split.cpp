@@ -2,11 +2,11 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "string.h"
 
 using namespace std;
-const int max_len = 893;
 
-int split_message(FILE *input){
+int split_message(FILE *input, int max_len){
     map<string, string>Tags;
     Tags = {{"<strong>", "</strong>"},
             {"<i>", "</i>"},
@@ -21,19 +21,19 @@ int split_message(FILE *input){
     vector<string> Stack;
 
     char c;                
-    int fragmentNum = 0;    //nomer fragmenta
-    int charCount = 0;      //kol-vo simvolov v tek fragmente
+    int fragmentNum = 0;    //Fragment number
+    int charCount = 0;      //The number of characters in the fragment
 
-    while((fscanf(input, "%c", &c)) != EOF){ //schityvaem fail
+    while((fscanf(input, "%c", &c)) != EOF){ //read file
         printf("%c", c);
 
-        if(c == '<'){       //formiruem teg
+        if(c == '<'){       //creating a tag
             while ((c != '>') + (c != ' ') > 1){
                 buffer.push_back(c);
                 fscanf(input, "%c", &c);
                 printf("%c", c);
             }
-            while (c != '>'){ // yesli u tega est atributy, propuskaem ih
+            while (c != '>'){ // If the tag has attributes, skip them
                 fscanf(input, "%c", &c);
                 printf("%c", c);
             }
@@ -44,33 +44,37 @@ int split_message(FILE *input){
         else{
             if(charCount == max_len){ 
                 if(!Stack.empty()){ 
-                    for(string s : Stack){ //Po okonchaniu fragmenta zakryvaem vse otkrytye tegi
+                    for(string s : Stack){ //At the end of the fragment, we close the open tags
                         if(Tags.count(s) == 0){
                             return 404;
                         }
                         printf("%s", Tags[s].c_str());
                     }
 
-                    printf("\n\nfragment #%d: %d chars\n\n", fragmentNum, charCount);
+                    printf("\n----------------------\n"
+                           "fragment #%d: %d chars"
+                           "\n----------------------\n", fragmentNum, charCount);
                     fragmentNum++;
 
-                    for(string s : Stack){ // otkryvaem zanovo v nachale sled fragmenta
+                    for(string s : Stack){ // open the closed tags at the beginning of the next fragment
                         printf("%s", s.c_str());
                     }
                     Stack.clear();
                 }
                 else{
-                    printf("\n\nfragment #%d: %d chars\n\n", fragmentNum, charCount);
+                    printf("\n----------------------\n"
+                           "fragment #%d: %d chars"
+                           "\n----------------------\n", fragmentNum, charCount);
                     fragmentNum++;
                 }
-
+                charCount = 0;
             }
-            charCount++; //Yesli net sformirovannyh tegov i limit ne prevyshen, nachinaem sled iteraciu
+            charCount++; //If there are no generated tags, we start the next iteration
             continue;
         }
 
 
-        //yesli sformirovannyi teg zakryvaushiy, ubiraem iz steka otkryvaushiy
+        //If the generated tag is closing, remove the opening one from the stack
 
         if(!buffer.empty() && !Stack.empty() && Stack.back() == buffer.erase(1, 1)){
             Stack.pop_back();
@@ -84,17 +88,28 @@ int split_message(FILE *input){
     return 1;
 }
 
-int main() {
-    FILE *input = fopen("source.html", "r");
-    if(input == NULL){
-        printf("FILE DOESNT EXIST");
+int main(int argc, char *argv[]) {
+    if(strcmp(argv[1], "-help") == 0){
+        printf("Example: msg_split 873 ./source.html");
+        return 0;
     }
-    int error = split_message(input);
+
+    FILE *input = fopen(argv[2], "r");
+    if(input == NULL){
+        printf("File doesn't exist or you enter something wrong "
+               "\nType msg_split -help for help");
+        return 0;
+    }
+
+    int max_len = strtol(argv[1], nullptr, 10);
+    int error = split_message(input, max_len);
+
     switch(error){
         case 404:
-            printf("%d\n", error);
+            printf("\n\nIt is impossible to divide into fragments of length %d %d\n", max_len);
             break;
-    }    
+    }
+
     fclose(input);
     return 0;
 }
